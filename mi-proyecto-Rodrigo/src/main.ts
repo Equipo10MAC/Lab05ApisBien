@@ -112,6 +112,15 @@ const createNewPost = async (): Promise<void> => {
 // PISTA A: Crea la interfaz 'Comment'. 
 // Recuerda que la API devuelve: postId, id, name, email y body.
 
+
+interface Comment{
+  postId: number;
+  id: number;
+  name: string; 
+  email: string;
+  body: string;
+}
+
 /**
  * PASO 7: FUNCIÓN DE BÚSQUEDA DE COMENTARIOS
  * Instrucciones:
@@ -119,6 +128,53 @@ const createNewPost = async (): Promise<void> => {
  * 2. Recuerda que la respuesta es una LISTA (Array) de objetos Comment.
  * 3. Usa un bucle o método de array (como .forEach) para mostrar los datos.
  */
+const fetchPostComments = async (id: number): Promise<void> => {
+  if (IS_DEBUG_MODE) {
+    console.log(`%c [RETO] Buscando comentarios del post con ID: ${id}...`, "color: green; font-weight: bold;");
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/posts/${id}/comments`);
+
+    if (!response.ok) {
+      throw new Error(`Error en la petición de comentarios: ${response.status}`);
+    }
+
+    // Como la API devuelve varios comentarios, aquí usamos un arreglo.
+    const comments: Comment[] = await response.json();
+
+    console.log(`✅ Se encontraron ${comments.length} comentarios:`);
+
+    comments.forEach((comment: Comment, index: number) => {
+      console.log(`\n--- Comentario ${index + 1} ---`);
+      console.log(`ID: ${comment.id}`);
+      console.log(`Nombre: ${comment.name}`);
+      console.log(`Email: ${comment.email}`);
+      console.log(`Contenido: ${comment.body.substring(0, 60)}...`);
+    });
+
+  } catch (error) {
+    console.error("❌ Fallo en el reto:", error);
+  }
+};
+
+/**
+ * PASO 8: EJECUCIÓN DE PRUEBAS
+ * Llamamos a las funciones para probar el flujo completo.
+ */
+const runLabs = async (): Promise<void> => {
+  await fetchSinglePost(POST_ID_TO_SEARCH);
+  await createNewPost();
+  await fetchPostComments(POST_ID_TO_SEARCH);
+};
+
+// Ejecutamos todo
+runLabs();
+
+
+
+
+
 /**
  * RETO DE LABORATORIO: Obtener recursos anidados (Comments)
  * * Instrucciones para el estudiante:
@@ -196,94 +252,98 @@ const fetchCommentsByPost = async (postId: number): Promise<void> => {
     Supabase challenge
 
     #################################################################################
+    
 
 
 
  */
+  import { createClient } from "@supabase/supabase-js";
 
-/**
- * PASO 1: CONFIGURACIÓN DE CONEXIÓN
- * Sustituye estos valores con los de tu proyecto en Supabase (Project Settings > API)
- */
-const SUPABASE_URL: string = "TU_URL_DE_SUPABASE";
-const SUPABASE_KEY: string = "TU_KEY";
+  /**
+   * PASO 1: CONFIGURACIÓN DE CONEXIÓN
+   * Sustituye estos valores con los de tu proyecto en Supabase (Project Settings > API)
+   */
+  const SUPABASE_URL: string = "https://ocdszexscqnhidlvxhie.supabase.co";
+  const SUPABASE_KEY: string = "sb_publishable_1-m3WmKFinpvZHtdeKxroA_T-cQd3F6";
 
-/**
- * PASO 2: INICIALIZACIÓN DEL CLIENTE
- * Creamos el objeto que nos permite hablar con la base de datos.
- */
+  /**
+   * PASO 2: INICIALIZACIÓN DEL CLIENTE
+   * Creamos el objeto que nos permite hablar con la base de datos.
+   */
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// DESCOMENTAR LA LINEA DE ABAJO
-// const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-/**
- * PASO 3: INTERFAZ DE DATOS
- * Definimos la estructura exacta de la tabla que vemos en tu imagen.
- */
-interface Auto {
-  id_auto: number;       // Columna ID (Primary Key)
-  patente: string;       // Columna Patente (Varchar)
-  id_propietario: number; // Columna ID Propietario (Foreign Key)
-}
-
-/**
- * PASO 4: LA FUNCIÓN DE LECTURA (GET)
- * Esta función entra a la base de datos y trae los registros.
- */
-const getAutos = async (): Promise<void> => {
-  
-  // Realizamos la consulta: 
-  // 1. .from('autos') -> Selecciona la tabla de tu imagen.
-  // 2. .select('*')   -> Pide todas las columnas de esa tabla.
-
-  // DESCOMENTAR ESTAS LINEAS QUE SIGUEN
-
-  /*const { data, error } = await supabase
-    .from('autos')   
-    .select('*');
-
-  // Si Supabase responde con un error (ej: tabla inexistente o sin permisos RLS)
-  if (error) {
-    console.error("❌ Error al obtener los autos:", error.message);
-    return;
+  /**
+   * PASO 3: INTERFAZ DE DATOS
+   * Definimos la estructura exacta de la tabla 'promocion' que aparece en tu imagen.
+   */
+  interface Promocion {
+    id_promocion: number;     // Columna ID Promoción (Primary Key)
+    id_restaurante: number;   // Columna ID Restaurante (Foreign Key)
+    titulo: string;           // Columna Título (Varchar)
+    descripcion: string;      // Columna Descripción (Text)
+    tipo_descuento: string;   // Columna Tipo Descuento (Varchar)
+    valor_descuento: number;  // Columna Valor Descuento (Numeric)
+    fecha_inicio: string;     // Columna Fecha Inicio (Date)
+    fecha_fin: string;        // Columna Fecha Fin (Date)
+    condiciones: string;      // Columna Condiciones (Text)
+    activa: boolean;          // Columna Activa (Bool)
   }
 
-  // Si todo sale bien, 'data' contiene el array de objetos.
-  // Usamos 'as Auto[]' para decirle a TS que confíe en nuestra interfaz.
-  const listaAutos: Auto[] = data as Auto[];
+  /**
+   * PASO 4: LA FUNCIÓN DE LECTURA (GET)
+   * Esta función entra a la base de datos y trae los registros.
+   */
+  const getPromociones = async (): Promise<void> => {
+    
+    // Realizamos la consulta: 
+    // 1. .from('promocion') -> Selecciona la tabla de tu imagen.
+    // 2. .select('*')       -> Pide todas las columnas de esa tabla.
+    try {
+      const { data, error } = await supabase
+        .from("promocion")
+        .select("*");
 
-  // Mostramos el resultado final en la consola del navegador
-  console.log("✅ Lista de autos recibida:");
-  console.table(listaAutos); 
+      // Si Supabase responde con un error
+      // (ej: tabla inexistente, sin permisos RLS, key incorrecta, etc.)
+      if (error) {
+        console.error("❌ Error al obtener las promociones:", error.message);
+        return;
+      }
 
-  HASTA AQUI DEBES DESCOMENTAR
-  */ 
-};
+      // Si todo sale bien, 'data' contiene el array de objetos.
+      // Usamos 'as Promocion[]' para decirle a TS que confíe en nuestra interfaz.
+      const listaPromociones: Promocion[] = data as Promocion[];
 
+      // Mostramos el resultado final en la consola del navegador
+      console.log("✅ Lista de promociones recibida:");
+      console.table(listaPromociones);
 
+    } catch (error) {
+      // Este bloque captura errores inesperados
+      console.error("❌ Error inesperado al consultar Supabase:", error);
+    }
+  };
 
+  /**
+   * PASO final: EJECUCIÓN DEL LABORATORIO
+   * Creamos una función orquestadora para manejar el flujo de las llamadas.
+   */
+  const runLaboratory = async (): Promise<void> => {
+    console.log(
+      "%c --- INICIO DEL EXPERIMENTO ---",
+      "background: #222; color: #bada55; padding: 5px;"
+    );
+    
+    // Usamos await para que los logs salgan en orden y no se mezclen.
+    await fetchSinglePost(POST_ID_TO_SEARCH); 
+    await createNewPost();    
+    await getPromociones();                
+    
+    console.log(
+      "%c --- EXPERIMENTO FINALIZADO ---",
+      "background: #222; color: #bada55; padding: 5px;"
+    );
+  };
 
-
-
-
-/**
- * PASO final: EJECUCIÓN DEL LABORATORIO
- * Creamos una función orquestadora para manejar el flujo de las llamadas.
- */
-const runLaboratory = async () => {
-  console.log("%c --- INICIO DEL EXPERIMENTO ---", "background: #222; color: #bada55; padding: 5px;");
-  
-  // Usamos await para que los logs salgan en orden y no se mezclen.
-  await fetchSinglePost(POST_ID_TO_SEARCH); 
-  await createNewPost();    
-  //await getAutos();                
-  
-  console.log("%c --- EXPERIMENTO FINALIZADO ---", "background: #222; color: #bada55; padding: 5px;");
-};
-
-
-
-
-
-// Disparamos todo el proceso.
-runLaboratory();
+  // Disparamos todo el proceso.
+  runLaboratory();
